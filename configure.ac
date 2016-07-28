@@ -123,6 +123,7 @@ AC_SUBST([env_editor])
 AC_SUBST([env_reset])
 AC_SUBST([passwd_tries])
 AC_SUBST([tty_tickets])
+AC_SUBST([logind_tickets])
 AC_SUBST([insults])
 AC_SUBST([root_sudo])
 AC_SUBST([path_info])
@@ -167,6 +168,7 @@ env_reset=on
 editor=vi
 passwd_tries=3
 tty_tickets=on
+logind_tickets=on
 insults=off
 root_sudo=on
 path_info=on
@@ -1040,6 +1042,23 @@ AC_ARG_WITH(tty-tickets, [AS_HELP_STRING([--with-tty-tickets], [use a different 
 esac])
 if test "$tty_tickets" = "off"; then
     AC_DEFINE(NO_TTY_TICKETS)
+    AC_MSG_RESULT(no)
+else
+    AC_MSG_RESULT(yes)
+fi
+
+AC_MSG_CHECKING(whether to use per-logind-session ticket files)
+AC_ARG_WITH(logind-tickets, [AS_HELP_STRING([--with-logind-tickets], [use a different ticket file for each logind session])],
+[case $with_logind_tickets in
+    yes)	logind_tickets=on
+		;;
+    no)		logind_tickets=off
+		;;
+    *)		AC_MSG_ERROR(["--with-logind-tickets does not take an argument."])
+		;;
+esac])
+if test "$logind_tickets" = "off"; then
+    AC_DEFINE(NO_LOGIND_TICKETS)
     AC_MSG_RESULT(no)
 else
     AC_MSG_RESULT(yes)
@@ -3312,6 +3331,24 @@ if test ${with_SecurID-'no'} != "no"; then
     AUTH_OBJS="$AUTH_OBJS securid5.lo";
 fi
 
+if test ${logind-tickets} != "no"; then
+	AC_CHECK_LIB(
+		systemd,
+		sd_pid_get_session,
+		[
+		AC_CHECK_HEADERS(
+			systemd/sd-login.h,
+			[
+			AC_DEFINE(HAVE_SD_LOGIN, [], [systemd logind exist])
+			SUDOERS_LIBS="${SUDOERS_LIBS} -lsystemd"
+			],
+			logind-tickets="no"
+			)
+		],
+		logind-tickets="no"
+	)
+fi
+
 dnl
 dnl Non-mutually exclusive auth checks come next.
 dnl Note: passwd must be last of all!
@@ -4347,6 +4384,7 @@ AH_TEMPLATE(NO_PAM_SESSION, [Define to 1 if you don't want to use sudo's PAM ses
 AH_TEMPLATE(NO_ROOT_MAILER, [Define to avoid runing the mailer as root.])
 AH_TEMPLATE(NO_ROOT_SUDO, [Define to 1 if root should not be allowed to use sudo.])
 AH_TEMPLATE(NO_TTY_TICKETS, [Define to 1 if you want a single ticket file instead of per-tty files.])
+AH_TEMPLATE(NO_LOGIND_TICKETS, [Define to 1 if you want a single ticket file instead of per-logind files.])
 AH_TEMPLATE(PC_INSULTS, [Define to 1 to replace politically incorrect insults with less offensive ones.])
 AH_TEMPLATE(PREFER_PORTABLE_GETCWD, [Define to 1 to enable replacement getcwd if system getcwd is broken.])
 AH_TEMPLATE(SECURE_PATH, [A colon-separated list of directories to override the user's PATH with.])

@@ -188,6 +188,8 @@
 #define I_ALWAYS_QUERY_GROUP_PLUGIN93
 #define def_netgroup_tuple      (sudo_defs_table[94].sd_un.flag)
 #define I_NETGROUP_TUPLE        94
+#define def_logind_tickets      (sudo_defs_table[95].sd_un.flag)
+#define I_LOGIND_TICKETS        95
 
 enum def_tuple {
 	never,
